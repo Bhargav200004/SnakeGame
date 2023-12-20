@@ -1,5 +1,6 @@
 package com.example.snakegame
 
+import android.media.MediaPlayer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,6 +19,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -46,6 +50,23 @@ fun SnakeGameScreen(
         Direction.LEFT -> ImageBitmap.imageResource(R.drawable.img_snake_head2)
         Direction.UP -> ImageBitmap.imageResource(R.drawable.img_snake_head3)
         Direction.DOWN -> ImageBitmap.imageResource(R.drawable.img_snake_head4)
+    }
+
+
+    val context = LocalContext.current
+    val soundFoodMp = remember { MediaPlayer.create(context,R.raw.food)}
+    val gameOverMp = remember { MediaPlayer.create(context,R.raw.gameover)}
+
+    LaunchedEffect(key1 = state.snake.size){
+        if (state.snake.size != 1){
+            soundFoodMp?.start()
+        }
+    }
+
+    LaunchedEffect(key1 = state.isGameOver){
+        if (state.isGameOver){
+            gameOverMp?.start()
+        }
     }
 
     Box(
@@ -73,12 +94,17 @@ fun SnakeGameScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2 / 3f)
-                    .pointerInput(state.gameState){
-                        if (state.gameState != GameState.STARTED){
+                    .pointerInput(state.gameState) {
+                        if (state.gameState != GameState.STARTED) {
                             return@pointerInput
                         }
-                        detectTapGestures {offset ->
-                            onEvent(SnakeGameEvent.Direction(offset = offset, canvasWidth = size.width))
+                        detectTapGestures { offset ->
+                            onEvent(
+                                SnakeGameEvent.Direction(
+                                    offset = offset,
+                                    canvasWidth = size.width
+                                )
+                            )
                         }
                     }
             ) {
