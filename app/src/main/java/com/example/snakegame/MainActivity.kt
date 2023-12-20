@@ -17,7 +17,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SnakeGameTheme {
-                SnakeGameScreen()
+                SnakeGameScreen(
+                    state = SnakeGameState()
+                )
             }
         }
     }
