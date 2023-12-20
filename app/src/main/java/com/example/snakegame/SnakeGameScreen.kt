@@ -31,10 +31,11 @@ import com.example.snakegame.ui.theme.RoyalBlue
 
 @Composable
 fun SnakeGameScreen(
-    state : SnakeGameState
+    state: SnakeGameState,
+    onEvent: (SnakeGameEvent) -> Unit
 ) {
 
-    val foodImage : ImageBitmap = ImageBitmap.imageResource(R.drawable.img_apple)
+    val foodImage: ImageBitmap = ImageBitmap.imageResource(R.drawable.img_apple)
     val snakeImage = when (state.direction) {
         Direction.RIGHT -> ImageBitmap.imageResource(R.drawable.img_snake_head)
         Direction.LEFT -> ImageBitmap.imageResource(R.drawable.img_snake_head2)
@@ -63,7 +64,7 @@ fun SnakeGameScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(2 / 3f)
-        ){
+        ) {
             val cellSize = size.width / 20
             drawGameBoard(
                 cellSize = cellSize,
@@ -91,17 +92,30 @@ fun SnakeGameScreen(
             Button(
                 modifier = Modifier
                     .weight(1f),
-                onClick = { /*TODO*/ }
+                onClick = { onEvent(SnakeGameEvent.RestartGame) },
+                enabled = state.gameState == GameState.PAUSED || state.isGameOver
             ) {
-                Text(text = "Replay")
+                Text(text = if (state.isGameOver) "Reset" else "New Game")
             }
             Spacer(modifier = Modifier.width(10.dp))
             Button(
                 modifier = Modifier
                     .weight(1f),
-                onClick = { /*TODO*/ }
+                onClick = {
+                    when (state.gameState) {
+                        GameState.IDLE, GameState.PAUSED -> onEvent(SnakeGameEvent.StartGame)
+                        GameState.STARTED -> onEvent(SnakeGameEvent.PauseGame)
+                    }
+                },
+                enabled = !state.isGameOver
             ) {
-                Text(text = "Start")
+                Text(
+                    text = when (state.gameState) {
+                        GameState.IDLE -> "Start"
+                        GameState.STARTED -> "Pause"
+                        GameState.PAUSED -> "Resume"
+                    }
+                )
             }
         }
     }
@@ -114,9 +128,9 @@ private fun DrawScope.drawGameBoard(
     gridWidth: Int,
     gridHeight: Int
 ) {
-    for (i  in 0 until  gridWidth){
-        for (j in 0 until  gridHeight){
-            val isBoarderCell = i ==0 || j == 0 || i == gridWidth -1 || j == gridHeight -1
+    for (i in 0 until gridWidth) {
+        for (j in 0 until gridHeight) {
+            val isBoarderCell = i == 0 || j == 0 || i == gridWidth - 1 || j == gridHeight - 1
             drawRect(
                 color = if (isBoarderCell) {
                     boardCellColor
@@ -126,51 +140,50 @@ private fun DrawScope.drawGameBoard(
                     cellColor.copy(alpha = 0.5f)
                 },
                 topLeft = Offset(x = i * cellSize, y = j * cellSize),
-                size = Size(cellSize , cellSize)
+                size = Size(cellSize, cellSize)
             )
         }
     }
 }
 
 private fun DrawScope.drawFood(
-    foodImage : ImageBitmap,
-    cellSize : Int,
-    coordinate : Coordinate
-){
+    foodImage: ImageBitmap,
+    cellSize: Int,
+    coordinate: Coordinate
+) {
     drawImage(
         image = foodImage,
         dstOffset = IntOffset(
-            x =(coordinate.x * cellSize) ,
-            y =(coordinate.y * cellSize)
+            x = (coordinate.x * cellSize),
+            y = (coordinate.y * cellSize)
         ),
-        dstSize = IntSize(cellSize,cellSize)
+        dstSize = IntSize(cellSize, cellSize)
     )
 }
 
 private fun DrawScope.drawSnake(
-    snakeImage : ImageBitmap,
+    snakeImage: ImageBitmap,
     cellSize: Float,
-    snake : List<Coordinate>
-){
+    snake: List<Coordinate>
+) {
     val cellSizeInt = cellSize.toInt()
-    snake.forEachIndexed{index , coordinate->
+    snake.forEachIndexed { index, coordinate ->
         val radius = if (index == snake.lastIndex) cellSize / 2.5f else cellSize / 2
-        if (index == 0){
+        if (index == 0) {
             drawImage(
                 image = snakeImage,
                 dstOffset = IntOffset(
-                    x =(coordinate.x * cellSizeInt) ,
-                    y =(coordinate.y * cellSizeInt)
+                    x = (coordinate.x * cellSizeInt),
+                    y = (coordinate.y * cellSizeInt)
                 ),
-                dstSize = IntSize(cellSizeInt,cellSizeInt)
+                dstSize = IntSize(cellSizeInt, cellSizeInt)
             )
-        }
-        else{
+        } else {
             drawCircle(
                 color = Citrine,
                 center = Offset(
-                    x =(coordinate.x * cellSize) + radius ,
-                    y =(coordinate.y * cellSize) + radius
+                    x = (coordinate.x * cellSize) + radius,
+                    y = (coordinate.y * cellSize) + radius
                 ),
                 radius = radius
             )
