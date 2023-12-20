@@ -1,5 +1,6 @@
 package com.example.snakegame
 
+import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
@@ -34,7 +35,9 @@ class SnakeGameViewModel : ViewModel() {
                     }
                 }
             }
-            is SnakeGameEvent.Direction -> TODO()
+            is SnakeGameEvent.Direction -> {
+                updateDirection(event.offset,event.canvasWidth)
+            }
             SnakeGameEvent.PauseGame ->{
                 _state.update {snakeGameState->
                     snakeGameState.copy(
@@ -48,6 +51,30 @@ class SnakeGameViewModel : ViewModel() {
             }
         }
     }
+
+    private fun updateDirection(offset: Offset, canvasWidth: Int) {
+        if (!state.value.isGameOver){
+            val cellSize = canvasWidth / state.value.xAxisGridSize
+            val tapX = (offset.x / cellSize).toInt()
+            val tapY = (offset.y / cellSize).toInt()
+            val head = state.value.snake.first()
+
+            _state.update {snakeGameState ->
+                snakeGameState.copy(
+                    direction = when(state.value.direction){
+                        Direction.UP,Direction.DOWN -> {
+                            if (tapX < head.x) Direction.LEFT else Direction.RIGHT
+                        }
+                        Direction.RIGHT,Direction.LEFT ->{
+                            if (tapY < head.y) Direction.UP else Direction.DOWN
+                        }
+                    }
+                )
+
+            }
+        }
+    }
+
 
     private fun updateGame(currentGame : SnakeGameState) : SnakeGameState{
         if (currentGame.isGameOver){
